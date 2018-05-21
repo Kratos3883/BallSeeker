@@ -42,7 +42,8 @@
 #include "Bit3.h"
 #include "Bit4.h"
 #include "AS1.h"
-
+#include "math.h"
+ 
 #define PWM_m1 0
 #define PWM_m2 1
 #define ESPERAR 2

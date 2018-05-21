@@ -29,6 +29,7 @@
 
 #include "Cpu.h"
 #include "Events.h"
+#include "math.h"
 
 /* User includes (#include below this line is not maintained by Processor Expert) */
 
