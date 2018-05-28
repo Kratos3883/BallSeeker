@@ -159,22 +159,22 @@ void SetPWM1(unsigned short porc, bool dir)
   		     
   		     x = c6+c5+c4+c3+c2+c1+238.43;	
   		     
-  		     if (x > 100){
+  		     if (x > 80){
   		    	 
   		    	 duty = 0;
   		     }
   		  		  	
-  		  	if (x<= 100 && x >= 40) {//busco la pelota
+  		  	if (x<= 80 && x >= 26) {//busco la pelota
   		  				dir1 = 0;
   		  				dir2 = 0; //adelante
   		  				Bit3_PutVal(FALSE);
-  		  			    duty=52427.2; //// 80% ////
+  		  			    duty=52427.2/c; //// 80% ////
   		  				//duty=(-0.4909*c)+81.899;//duty=(-69.024*c)+61.973;	
   		  				//duty=(-983.01*duty)+55704; // entre 70% y 10% //  
   		  	
   		  	}
   		  	
-  		  	if (x >= 20 && x <= 40)	{// Frenado
+  		  	if (x >= 16 && x <= 26)	{// Frenado
   		  		
   		  		Bit4_PutVal(FALSE);    
   		  		duty=0; //// 80% ////	
@@ -184,10 +184,10 @@ void SetPWM1(unsigned short porc, bool dir)
   		  		  	}
   		  	
   		  	
-  		  	if (x < 20){
+  		  	if (x < 16){
   		  		dir1 = 1;
   		  		dir2 = 1; //atras
-  		  		duty = 52427.2; //// 80% ////
+  		  		duty = 52427.2*c; //// 80% ////
   		  	}
   		  
   		  					
