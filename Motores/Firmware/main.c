@@ -51,6 +51,7 @@ void sharp_motores(float c);
 unsigned char estado= PWM_set;
 unsigned int enviados=2;
 unsigned short sharp = 0;
+unsigned short sharp_temp = 0;
 float voltaje = 0;
 unsigned short duty1 = 10;
 unsigned short duty2 = 10;
@@ -101,9 +102,9 @@ void main(void)
   			  //dir=duty & 0x40 >> 6; //0x40=0100 0000
   			  //estado= duty & 0x80 >> 7; // 0x80=1000 0000 Decido a que motor le cambiaré el duty cycle
   			  AD1_Measure(TRUE);
-  			  AD1_GetValue16(&sharp); // tomo lo que me mide el sharp
-  			  sharp = sharp>>4;
-  			  voltaje = 0.000733*sharp; // lo paso a float para guardarlo como voltaje y operarlo en la resolvente  
+  			  AD1_GetValue16(&sharp); // guardo en sharp lo que midió el ADC del sensor
+  			  sharp = sharp>>4;		//los 4 bits menos significativos no guardan información
+  			  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
   			  sharp_motores(voltaje);
   			  estado = PWM_m1;
   			  /*Parte donde a partir de condicionales defino duty1 y duty2 dependiendo de lo que se lea en el ADC*/
@@ -141,65 +142,56 @@ void SetPWM1(unsigned short porc, bool dir)
   	PWM2_SetRatio16(porc);
   	Bit2_PutVal(dir);
   }
-  
-  void sharp_motores(float c){
-  	if(c<=1.85){ 
-  			 p2 = c*c;
-  		     p3 = p2*c;
-  		     p4 = p3*c;
-  		     p5 = p4*c;
-  		     p6 = p5*c;
-  		     
-  		     c6 = 43.097*p6;
-  		     c5 = -331.58*p5;
-  		     c4 = 1049.6*p4;
-  		     c3 = -1767.2*p3;
-  		     c2 = 1699.9*p2;
-  		     c1 = -917.52*c;
-  		     
-  		     x = c6+c5+c4+c3+c2+c1+238.43;	
-  		     
-  		     if (x > 80){
-  		    	 
-  		    	 duty = 0;
-  		     }
-  		  		  	
-  		  	if (x<= 80 && x >= 26) {//busco la pelota
-  		  				dir1 = 0;
-  		  				dir2 = 0; //adelante
-  		  				Bit3_PutVal(FALSE);
-  		  			    duty=52427.2/c; //// 80% ////
-  		  				//duty=(-0.4909*c)+81.899;//duty=(-69.024*c)+61.973;	
-  		  				//duty=(-983.01*duty)+55704; // entre 70% y 10% //  
-  		  	
-  		  	}
-  		  	
-  		  	if (x >= 16 && x <= 26)	{// Frenado
-  		  		
-  		  		Bit4_PutVal(FALSE);    
-  		  		duty=0; //// 80% ////	
-  		  					//debug=duty;
-  		  		  	    	//duty=20783.25; //// 32% ////38.75cm
-  		  		  	  		  					
-  		  		  	}
-  		  	
-  		  	
-  		  	if (x < 16){
-  		  		dir1 = 1;
-  		  		dir2 = 1; //atras
-  		  		duty = 52427.2*c; //// 80% ////
-  		  	}
-  		  
-  		  					
-  		  						
-  		  			}
-  	else {
-  		duty = 0;
+  //La curva que describe mejor el comportamiento del Sharp en términos de distancia vs V, es un polinomio de 6to grado
+  //En esta función se determina a que distancia corresponde el voltaje leído (v)
+  void sharp_motores(float v)
+  {
+  	if(v<=0.92)//A partir del primer mínimo después del máximo de voltaje
+  	{ 
+  		p2 = v*v; 	// v^2
+		p3 = p2*v;	//v^3
+		p4 = p3*v;	//v^4
+		p5 = p4*v;	//v^5
+		p6 = p5*v;	//v^6
+		//multiplicación por coeficientes del polinomio
+		c6 = 56.1*p6;
+		c5 = -441.64*p5;
+		c4 = 1413.3*p4;
+		c3 = -2364.4*p3;
+		c2 = 2207.7*p2;
+		c1 = -1124.3*v;
+		
+		x = c6+c5+c4+c3+c2+c1+268.28;	
+		
+		//Se detiene si no hay obstáculo
+		if(x>=15 && x<=20)
+		{
+			duty = 0;
+		}
+		//En este rango de distancias busco la pelota, avanzo hacia adelante
+		if(x>20 && x<=59) 
+		{
+			dir1 = 0;	//adelante
+			dir2 = 0; 	//adelante
+			Bit3_PutVal(FALSE);	//enciende los leds PTC2
+			duty=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+			//duty=(-0.4909*c)+81.899;//duty=(-69.024*c)+61.973;	
+			//duty=(-983.01*duty)+55704; // entre 70% y 10% //
+		}
+		if(x>59)
+		{
+			duty = 0;
+		}
+  	
   	}
-  	
-  		  			
-  		  			
-  	
+  	else
+  	{
+  		
+  		dir1 = 1;	//atras
+		dir2 = 1; 	//atras
+		Bit3_PutVal(FALSE);	//enciende los leds PTC2
+		duty=65535*0.35;	
+  	}
   }
 /* END main */
 /*!
