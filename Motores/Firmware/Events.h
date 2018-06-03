@@ -45,8 +45,8 @@
 #include "AD1.h"
 #include "math.h"
  
-#define PWM_m1 0
-#define PWM_m2 1
+#define PWM_r_n 0
+#define PWM_v_b 1
 #define ESPERAR 2
 #define PWM_set 3
 
