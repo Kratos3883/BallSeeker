@@ -46,10 +46,9 @@
 #include "TI1.h"
 #include "math.h"
  
-#define PWM_r_n 0
-#define PWM_v_b 1
-#define ESPERAR 2
-#define PWM_set 3
+#define ESPERAR 0
+#define MEDIR 1
+#define PWM_set 2
 
 
 extern unsigned char estado;

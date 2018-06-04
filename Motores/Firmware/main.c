@@ -49,10 +49,10 @@
 void SetPWM_r_n(unsigned short porc, bool dir);
 void SetPWM_v_b(unsigned short porc, bool dir);
 void sharp_motores(float c);
-unsigned char estado= PWM_set;
+unsigned char estado= ESPERAR;
 unsigned int enviados=2;
 unsigned short sharp = 0;
-unsigned short sharp_prev = 0; //Almacena el valor previo del Sharp para compararlo con el actual y determinar en qué zona de la curva del sensor se está midiendo
+unsigned short v_prev = 0; //Almacena el valor previo del Sharp para compararlo con el actual y determinar en qué zona de la curva del sensor se está midiendo
 float voltaje = 0;
 unsigned short duty_r_n = 10;//motor rojo-negro
 unsigned short duty_v_b = 10;//motor verde-blanco
@@ -73,6 +73,7 @@ double c3= 0;
 double c2= 0;
 double c1= 0;
 double x = 0;
+int i =0;	//Contador para promediar lectura del ADC
 
      
 
@@ -93,21 +94,30 @@ void main(void)
   		  {
   		  case ESPERAR:
   			  break;
-  		  case PWM_set:
+  		  case MEDIR:
   			  AD1_Measure(TRUE);
   			  AD1_GetValue16(&sharp); // guardo en sharp lo que midió el ADC del sensor
   			  sharp = sharp>>4;		//los 4 bits menos significativos no guardan información
-  			  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
-  			  sharp_motores(voltaje);
-  			  estado = PWM_r_n;
+  			  if(i==0)
+  				  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
+  			  else
+  				  voltaje=(voltaje + sharp*1.92/2440)/2;
+  			  
+  			  i++;
+  			  
+  			  if(i==50)
+  			  {
+  				  estado = PWM_set;
+  			  	  i=0;
+  			  }
+  			  else
+  				  estado=ESPERAR;
   			  /*Parte donde a partir de condicionales defino duty1 y duty2 dependiendo de lo que se lea en el ADC*/
   			  break;
-  		  case PWM_r_n: //Definir duty cycle motor rojo negro
-  			  SetPWM_r_n(duty_r_n,dir_r_n);
-  			  estado= PWM_v_b;
-  			  break;
-  		  case PWM_v_b: //Definir duty cycle motor verde blanco
-  			  SetPWM_v_b(duty_v_b,dir_v_b);
+  		  case PWM_set: 
+  			  sharp_motores(voltaje);
+  			  SetPWM_r_n(duty_r_n,dir_r_n);	//Definir duty cycle motor rojo negro
+  			  SetPWM_v_b(duty_v_b,dir_v_b);	//Definir duty cycle motor verde blanco
   			  estado= PWM_set;
   			  break;
   			  
@@ -136,7 +146,7 @@ void SetPWM_r_n(unsigned short porc, bool dir)
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
   void sharp_motores(float v)
   {
-	if (sharp>sharp_prev)	//distancia superior al pico de la curva del sensor
+	if (v_prev>v && )	//distancia superior al pico de la curva del sensor
 	{
 		
 		p2 = v*v; 	// v^2
@@ -172,7 +182,6 @@ void SetPWM_r_n(unsigned short porc, bool dir)
 					dir_r_n = 0;	//adelante
 					dir_v_b = 0; 	//adelante
 				}
-				sharp_prev=sharp;
 				
 			}
 		else
@@ -181,7 +190,6 @@ void SetPWM_r_n(unsigned short porc, bool dir)
 			dir_v_b = 0; 	//adelante
 			duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
 			duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-			sharp_prev=sharp;
 		}
 	}
 	
@@ -192,8 +200,9 @@ void SetPWM_r_n(unsigned short porc, bool dir)
 		Bit3_PutVal(FALSE);	//enciende los leds PTC2
 		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
 		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez	
-		sharp_prev=sharp;
+
   	}
+	v_prev=v;
   }
 /* END main */
 /*!
