@@ -71,7 +71,7 @@ void  AS1_OnError(void)
 void  AS1_OnRxChar(void)
 {
 	/*Interrupción de puerto serial*/
-	
+	estado=PWM_set;
 }
 
 /*
@@ -162,7 +162,6 @@ void AD1_OnEnd(void)
 void TI1_OnInterrupt(void)
 {
   /* Write your code here ... */
-	estado=MEDIR;
 
 }
 
