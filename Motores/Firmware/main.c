@@ -38,6 +38,7 @@
 #include "Bit4.h"
 #include "AS1.h"
 #include "AD1.h"
+#include "TI1.h"
 /* Include shared modules, which are used for whole project */
 #include "PE_Types.h"
 #include "PE_Error.h"
@@ -45,19 +46,19 @@
 #include "IO_Map.h"
 #include "math.h"
 /* User includes (#include below this line is not maintained by Processor Expert) */
-void SetPWM1(unsigned short porc, bool dir);
-void SetPWM2(unsigned short porc, bool dir);
+void SetPWM_r_n(unsigned short porc, bool dir);
+void SetPWM_v_b(unsigned short porc, bool dir);
 void sharp_motores(float c);
 unsigned char estado= PWM_set;
 unsigned int enviados=2;
 unsigned short sharp = 0;
 unsigned short sharp_temp = 0;
 float voltaje = 0;
-unsigned short duty1 = 10;
-unsigned short duty2 = 10;
+unsigned short duty_r_n = 10;//motor rojo-negro
+unsigned short duty_v_b = 10;//motor verde-blanco
 unsigned short duty;
-bool dir1 = 0;
-bool dir2 = 0;
+bool dir_r_n = 0;//motor rojo-negro
+bool dir_v_b = 0;//motor verde-blanco
 
 double p1=0;
 double p2=0;
@@ -106,15 +107,15 @@ void main(void)
   			  sharp = sharp>>4;		//los 4 bits menos significativos no guardan información
   			  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
   			  sharp_motores(voltaje);
-  			  estado = PWM_m1;
+  			  estado = PWM_r_n;
   			  /*Parte donde a partir de condicionales defino duty1 y duty2 dependiendo de lo que se lea en el ADC*/
   			  break;
-  		  case PWM_m1: //Definir duty cycle motor 1
-  			  SetPWM1(duty,dir1);
-  			  estado= PWM_m2;
+  		  case PWM_r_n: //Definir duty cycle motor rojo negro
+  			  SetPWM_r_n(duty_r_n,dir_r_n);
+  			  estado= PWM_v_b;
   			  break;
-  		  case PWM_m2: //Definir duty cycle motor 1
-  			  SetPWM2(duty,dir2);
+  		  case PWM_v_b: //Definir duty cycle motor verde blanco
+  			  SetPWM_v_b(duty_v_b,dir_v_b);
   			  //estado=ESPERAR;
   			  estado= PWM_set;
   			  break;
@@ -130,13 +131,13 @@ void main(void)
   for(;;){}
   /*** Processor Expert end of main routine. DON'T WRITE CODE BELOW!!! ***/
 } /*** End of main routine. DO NOT MODIFY THIS TEXT!!! ***/
-void SetPWM1(unsigned short porc, bool dir)
+void SetPWM_r_n(unsigned short porc, bool dir)
   {	
   	//porc=porc & 0x3f; //0x3f=0011 1111
   	PWM1_SetRatio16(porc);
   	Bit1_PutVal(dir);
   }
-  void SetPWM2(unsigned short porc, bool dir)
+void SetPWM_v_b(unsigned short porc, bool dir)
   {
   	//porc= porc & 0x3f; //0x3f=0011 1111
   	PWM2_SetRatio16(porc);
@@ -167,30 +168,31 @@ void SetPWM1(unsigned short porc, bool dir)
 		if(x>=15 && x<=20)
 		{
 			duty = 0;
+			duty_r_n = 0;
+			duty_v_b = 0;
 		}
 		//En este rango de distancias busco la pelota, avanzo hacia adelante
 		if(x>20 && x<=59) 
 		{
-			dir1 = 0;	//adelante
-			dir2 = 0; 	//adelante
-			Bit3_PutVal(FALSE);	//enciende los leds PTC2
-			duty=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-			//duty=(-0.4909*c)+81.899;//duty=(-69.024*c)+61.973;	
-			//duty=(-983.01*duty)+55704; // entre 70% y 10% //
+			dir_r_n = 0;	//adelante
+			dir_v_b = 0; 	//adelante
+			duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+			duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
 		}
 		if(x>59)
 		{
-			duty = 0;
+			duty_r_n = 0;
+			duty_v_b = 0;
 		}
   	
   	}
   	else
   	{
   		
-  		dir1 = 1;	//atras
-		dir2 = 1; 	//atras
-		Bit3_PutVal(FALSE);	//enciende los leds PTC2
-		duty=65535*0.35;	
+  		dir_r_n = 1;	//atras
+		dir_v_b = 1; 	//atras
+		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
   	}
   }
 /* END main */

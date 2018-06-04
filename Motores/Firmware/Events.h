@@ -43,10 +43,11 @@
 #include "Bit4.h"
 #include "AS1.h"
 #include "AD1.h"
+#include "TI1.h"
 #include "math.h"
  
-#define PWM_m1 0
-#define PWM_m2 1
+#define PWM_r_n 0
+#define PWM_v_b 1
 #define ESPERAR 2
 #define PWM_set 3
 
@@ -142,6 +143,22 @@ void AD1_OnEnd(void);
 **         of <1 or more conversions>) is/are finished.
 **         The event is available only when the <Interrupt
 **         service/event> property is enabled.
+**     Parameters  : None
+**     Returns     : Nothing
+** ===================================================================
+*/
+
+void TI1_OnInterrupt(void);
+/*
+** ===================================================================
+**     Event       :  TI1_OnInterrupt (module Events)
+**
+**     Component   :  TI1 [TimerInt]
+**     Description :
+**         When a timer interrupt occurs this event is called (only
+**         when the component is enabled - <Enable> and the events are
+**         enabled - <EnableEvent>). This event is enabled only if a
+**         <interrupt service/event> is enabled.
 **     Parameters  : None
 **     Returns     : Nothing
 ** ===================================================================
