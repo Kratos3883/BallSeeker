@@ -38,6 +38,7 @@
 #include "Bit4.h"
 #include "AS1.h"
 #include "AD1.h"
+#include "TI1.h"
 /* Include shared modules, which are used for whole project */
 #include "PE_Types.h"
 #include "PE_Error.h"
@@ -51,7 +52,7 @@ void sharp_motores(float c);
 unsigned char estado= PWM_set;
 unsigned int enviados=2;
 unsigned short sharp = 0;
-unsigned short sharp_temp = 0;
+unsigned short sharp_prev = 0; //Almacena el valor previo del Sharp para compararlo con el actual y determinar en qué zona de la curva del sensor se está midiendo
 float voltaje = 0;
 unsigned short duty_r_n = 10;//motor rojo-negro
 unsigned short duty_v_b = 10;//motor verde-blanco
@@ -135,9 +136,10 @@ void SetPWM_r_n(unsigned short porc, bool dir)
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
   void sharp_motores(float v)
   {
-  	if(v<=0.92)//A partir del primer mínimo después del máximo de voltaje
-  	{ 
-  		p2 = v*v; 	// v^2
+	if (sharp>sharp_prev)	//distancia superior al pico de la curva del sensor
+	{
+		
+		p2 = v*v; 	// v^2
 		p3 = p2*v;	//v^3
 		p4 = p3*v;	//v^4
 		p5 = p4*v;	//v^5
@@ -150,41 +152,47 @@ void SetPWM_r_n(unsigned short porc, bool dir)
 		c2 = 2207.7*p2;
 		c1 = -1124.3*v;
 		
-		x = c6+c5+c4+c3+c2+c1+268.28;	
+		x = c6+c5+c4+c3+c2+c1+268.28;
 		
-		//Se detiene si no hay obstáculo
-		if(x>=15 && x<=20)
-		{
-			duty_r_n = 0;
-			duty_v_b = 0;
-					
-		}
-		//En este rango de distancias busco la pelota, avanzo hacia adelante
-		if(x>20 && x<=59) 
+		if(v<=0.96)
+			{
+				
+				if(x<=59) 
+				{
+					dir_r_n = 0;	//adelante
+					dir_v_b = 0; 	//adelante
+					Bit3_PutVal(FALSE);	//enciende los leds PTC2
+					duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+					duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+				}
+				if(x>59)
+				{
+					duty_r_n = 0;
+					duty_v_b = 0;
+					dir_r_n = 0;	//adelante
+					dir_v_b = 0; 	//adelante
+				}
+				sharp_prev=sharp;
+				
+			}
+		else
 		{
 			dir_r_n = 0;	//adelante
 			dir_v_b = 0; 	//adelante
-			Bit3_PutVal(FALSE);	//enciende los leds PTC2
-			duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-			duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-			//duty=(-0.4909*c)+81.899;//duty=(-69.024*c)+61.973;	
-			//duty=(-983.01*duty)+55704; // entre 70% y 10% //
+			duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+			duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+			sharp_prev=sharp;
 		}
-		if(x>59)
-		{
-			duty_r_n = 0;
-			duty_v_b = 0;
-		}
-  	
-  	}
-  	else
+	}
+	
+	else
   	{
-  		
   		dir_r_n = 1;	//atras
 		dir_v_b = 1; 	//atras
 		Bit3_PutVal(FALSE);	//enciende los leds PTC2
-		duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-		duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez	
+		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez	
+		sharp_prev=sharp;
   	}
   }
 /* END main */
