@@ -147,7 +147,7 @@ void SetPWM_v_b(unsigned short porc, bool dir)
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
   void sharp_motores(float v)
   {
-  	if(v<=0.92)//A partir del primer mínimo después del máximo de voltaje
+  	if(v<=1.92)//Pico maximo de la curva
   	{ 
   		p2 = v*v; 	// v^2
 		p3 = p2*v;	//v^3
@@ -165,14 +165,7 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		x = c6+c5+c4+c3+c2+c1+268.28;	
 		
 		//Se detiene si no hay obstáculo
-		if(x>=15 && x<=20)
-		{
-			duty = 0;
-			duty_r_n = 0;
-			duty_v_b = 0;
-		}
-		//En este rango de distancias busco la pelota, avanzo hacia adelante
-		if(x>20 && x<=59) 
+		if(x>=6 && x<=59)
 		{
 			dir_r_n = 0;	//adelante
 			dir_v_b = 0; 	//adelante
@@ -184,6 +177,7 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 			duty_r_n = 0;
 			duty_v_b = 0;
 		}
+		
   	
   	}
   	else
