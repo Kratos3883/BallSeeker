@@ -46,6 +46,9 @@
 #include "IO_Map.h"
 #include "math.h"
 /* User includes (#include below this line is not maintained by Processor Expert) */
+
+#define v_aumenta 1
+#define v_disminuye 0
 void SetPWM_r_n(unsigned short porc, bool dir);
 void SetPWM_v_b(unsigned short porc, bool dir);
 void sharp_motores(float c);
@@ -59,6 +62,7 @@ unsigned short duty_v_b = 10;//motor verde-blanco
 unsigned short duty;
 bool dir_r_n = 0;//motor rojo-negro
 bool dir_v_b = 0;//motor verde-blanco
+bool v_aumenta = 0;
 
 double p1=0;
 double p2=0;
@@ -73,7 +77,8 @@ double c3= 0;
 double c2= 0;
 double c1= 0;
 double x = 0;
-int i =0;	//Contador para promediar lectura del ADC
+int i =0, j=0;	//Contador para promediar lectura del ADC
+
 
      
 
@@ -98,20 +103,29 @@ void main(void)
   			  AD1_Measure(TRUE);
   			  AD1_GetValue16(&sharp); // guardo en sharp lo que midió el ADC del sensor
   			  sharp = sharp>>4;		//los 4 bits menos significativos no guardan información
-  			  if(i==0)
-  				  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
-  			  else
-  				  voltaje=(voltaje + sharp*1.92/2440)/2;
-  			  
-  			  i++;
-  			  
-  			  if(i==50)
-  			  {
-  				  estado = PWM_set;
-  			  	  i=0;
-  			  }
-  			  else
-  				  estado=ESPERAR;
+  			  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
+  			  if voltaje>v_prev;
+  			  	  	  i++;
+  			  v_prev=voltaje;
+
+  			  if (j==50)
+  					  {
+						  if(i>=25)
+						  {
+							  estado = PWM_set;
+							  v_aumenta=TRUE;
+							  i=0;
+							  j=0;
+						  }
+						  else
+						  {
+							  estado=PWM_set;
+							  v_aumenta=FALSE;
+							  i=0;
+							  j=0;
+						  }
+  					  }
+  			  j++;
   			  /*Parte donde a partir de condicionales defino duty1 y duty2 dependiendo de lo que se lea en el ADC*/
   			  break;
   		  case PWM_set: 
@@ -146,7 +160,40 @@ void SetPWM_r_n(unsigned short porc, bool dir)
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
   void sharp_motores(float v)
   {
-	if (v_prev>v && )	//distancia superior al pico de la curva del sensor
+	if (v <= 0.96)	//distancia superior al pico de la curva del sensor
+	{
+		p2 = v*v; 	// v^2
+		p3 = p2*v;	//v^3
+		p4 = p3*v;	//v^4
+		p5 = p4*v;	//v^5
+		p6 = p5*v;	//v^6
+		//multiplicación por coeficientes del polinomio
+		c6 = 56.1*p6;
+		c5 = -441.64*p5;
+		c4 = 1413.3*p4;
+		c3 = -2364.4*p3;
+		c2 = 2207.7*p2;
+		c1 = -1124.3*v;
+		
+		x = c6+c5+c4+c3+c2+c1+268.28;
+		
+		if(x<=59) 
+		{
+			dir_r_n = 0;	//adelante
+			dir_v_b = 0; 	//adelante
+			duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+			duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+		}
+		if(x>59)
+		{
+			duty_r_n = 0;
+			duty_v_b = 0;
+			dir_r_n = 0;	//adelante
+			dir_v_b = 0; 	//adelante
+		}
+	}
+	
+	else if(!dir_r_n && !dir_v_b && v_aumenta)
 	{
 		
 		p2 = v*v; 	// v^2
@@ -164,45 +211,39 @@ void SetPWM_r_n(unsigned short porc, bool dir)
 		
 		x = c6+c5+c4+c3+c2+c1+268.28;
 		
-		if(v<=0.96)
-			{
-				
-				if(x<=59) 
-				{
-					dir_r_n = 0;	//adelante
-					dir_v_b = 0; 	//adelante
-					Bit3_PutVal(FALSE);	//enciende los leds PTC2
-					duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-					duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-				}
-				if(x>59)
-				{
-					duty_r_n = 0;
-					duty_v_b = 0;
-					dir_r_n = 0;	//adelante
-					dir_v_b = 0; 	//adelante
-				}
-				
-			}
-		else
-		{
-			dir_r_n = 0;	//adelante
-			dir_v_b = 0; 	//adelante
-			duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-			duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
-		}
+		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
 	}
 	
-	else
+	else if(!dir_r_n && !dir_v_b && v_aumenta!)
   	{
+		// Caracterizar este lado de la curva
   		dir_r_n = 1;	//atras
 		dir_v_b = 1; 	//atras
-		Bit3_PutVal(FALSE);	//enciende los leds PTC2
 		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
 		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez	
 
   	}
-	v_prev=v;
+	
+	else if(dir_r_n && dir_v_b && v_aumenta)
+	{
+		// Caracterizar este lado de la curva
+		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez	
+
+	}
+	
+	else if(dir_r_n && dir_v_b && v_aumenta!)
+	{
+		
+  		dir_r_n = 0;	//atras
+		dir_v_b = 0; 	//atras
+		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez
+		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstáculo disminuye rapidez	
+
+	}
+	
+
   }
 /* END main */
 /*!
