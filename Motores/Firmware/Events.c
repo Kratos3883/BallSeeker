@@ -31,6 +31,10 @@
 #include "Events.h"
 #include "math.h"
 
+extern unsigned char Mx;
+bool bypass1 = 0, bypass2 = 0;
+
+
 /* User includes (#include below this line is not maintained by Processor Expert) */
 
 /*
@@ -71,6 +75,27 @@ void  AS1_OnError(void)
 void  AS1_OnRxChar(void)
 {
 	/*Interrupción de puerto serial*/
+	
+	unsigned char rChar = 0;
+
+	AS1_RecvChar(&rChar);
+	
+	if(bypass2){
+		if(rChar == ' ')
+			bypass2 = 0;
+		else{
+			Mx = Mx*10 + (rChar-0x30);
+		}
+	}
+	if(bypass1)
+	{
+		bypass1 = 0;
+		bypass2 = 1;
+	}
+	if(rChar == 'M'){
+		Mx = 0;
+		bypass1 = 1;
+	}
 	
 }
 
@@ -161,8 +186,8 @@ void AD1_OnEnd(void)
 */
 void TI1_OnInterrupt(void)
 {
-  /* Write your code here ... */
-	estado=MEDIR;
+	if(estado==ESPERAR)
+		estado=UBICAR_PELOTA;
 
 }
 

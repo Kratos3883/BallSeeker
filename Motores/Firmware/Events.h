@@ -47,8 +47,10 @@
 #include "math.h"
  
 #define ESPERAR 0
-#define MEDIR 1
-#define PWM_set 2
+#define AVANZA 1
+#define UBICAR_PELOTA 2
+#define CAMARA 3
+
 
 
 extern unsigned char estado;
