@@ -30,7 +30,11 @@
 #include "Cpu.h"
 #include "Events.h"   
 
-extern unsigned char Mx;
+extern unsigned char palabra_recepcion_PC1[15];
+extern int estado;
+extern int estado_cam;
+extern int i = 0;
+extern int Mx;
 bool bypass1 = 0, bypass2 = 0;
 
 /* User includes (#include below this line is not maintained by Processor Expert) */
@@ -72,7 +76,31 @@ void  AS2_OnError(void)
 */
 void  AS2_OnRxChar(void)
 { 	
-
+	unsigned char letra = 0;
+	AS2_RecvChar(&letra);
+	if (letra == 'a'){
+		estado = 1;
+	}
+		else if (letra == 'b'){
+				estado = 2;
+		}
+			else if (letra == 'c'){
+					estado = 3;
+			}
+				else if (letra == 'd'){
+						estado = 4;
+				}
+					else if (letra == 'e'){
+							estado = 5;
+					}
+						else if (letra == 'f'){
+								estado = 6;
+						}
+							else if (letra == 'g'){
+									estado = 7;
+							}
+	AS2_SendChar(letra);
+	AS2_ClearRxBuf();	
 }
 
 /*
@@ -166,11 +194,20 @@ void  AS1_OnError(void)
 void  AS1_OnRxChar(void)
 {
   /* Write your code here ... */
+	/* Write your code here ... */
+		//i=1;
+		  /* Write your code here ... */
+		//AS1_RecvChar(&palabra_recepcion_PC1[i]);
+	/*unsigned char letra2 = 0;
+		AS1_RecvChar(&letra2);*/
 		unsigned char rChar = 0;
-
+		
+		//estado_cam = 1; 
 		AS1_RecvChar(&rChar);
+		AS2_SendChar(rChar);
 		
 		if(bypass2){
+			//AS2_SendChar(rChar);
 			if(rChar == ' ')
 				bypass2 = 0;
 			else{
@@ -180,13 +217,40 @@ void  AS1_OnRxChar(void)
 		if(bypass1)
 		{
 			bypass1 = 0;
+			//AS2_SendChar(rChar);
 			bypass2 = 1;
 		}
 		if(rChar == 'M'){
+			//AS2_SendChar(rChar);
 			Mx = 0;
 			bypass1 = 1;
 		}
+		
+		if(rChar == ':'){
+			estado_cam = 1;
+		}
+			
+		
+		/*
+		if(rChar == 'M'){
 
+				 AS1_RecvChar(&rChar);
+				 AS2_SendChar(rChar);	
+				 
+				 Mx = 0;
+				 rChar = 71;
+					 //do{
+						 Mx = Mx*10 + (rChar-0x30);
+						 AS1_RecvChar(&rChar);
+						 AS2_SendChar(rChar);
+						 
+					// }while(rChar != ' '); 
+			  }*/
+
+		
+		
+		//AS1_ClearRxBuf();
+			//i++;
 }
 
 /*
@@ -238,6 +302,46 @@ void  AS1_OnFreeTxBuf(void)
 {
   /* Write your code here ... */
 }
+
+/*
+** ===================================================================
+**     Event       :  TI1_OnInterrupt (module Events)
+**
+**     Component   :  TI1 [TimerInt]
+**     Description :
+**         When a timer interrupt occurs this event is called (only
+**         when the component is enabled - <Enable> and the events are
+**         enabled - <EnableEvent>). This event is enabled only if a
+**         <interrupt service/event> is enabled.
+**     Parameters  : None
+**     Returns     : Nothing
+** ===================================================================
+*/
+void TI1_OnInterrupt(void)
+{
+  /* Write your code here ... */
+
+}
+
+/*
+** ===================================================================
+**     Event       :  AD1_OnEnd (module Events)
+**
+**     Component   :  AD1 [ADC]
+**     Description :
+**         This event is called after the measurement (which consists
+**         of <1 or more conversions>) is/are finished.
+**         The event is available only when the <Interrupt
+**         service/event> property is enabled.
+**     Parameters  : None
+**     Returns     : Nothing
+** ===================================================================
+*/
+void AD1_OnEnd(void)
+{
+  /* Write your code here ... */
+}
+
 
 /* END Events */
 
