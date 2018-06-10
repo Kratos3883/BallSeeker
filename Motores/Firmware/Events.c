@@ -32,6 +32,7 @@
 #include "math.h"
 
 extern unsigned char Mx;
+extern bool estado_cam;
 bool bypass1 = 0, bypass2 = 0;
 
 
@@ -77,10 +78,13 @@ void  AS1_OnRxChar(void)
 	/*Interrupción de puerto serial*/
 	
 	unsigned char rChar = 0;
-
+		
+	//estado_cam = 1; 
 	AS1_RecvChar(&rChar);
+	AS2_SendChar(rChar);
 	
 	if(bypass2){
+		//AS2_SendChar(rChar);
 		if(rChar == ' ')
 			bypass2 = 0;
 		else{
@@ -90,11 +94,17 @@ void  AS1_OnRxChar(void)
 	if(bypass1)
 	{
 		bypass1 = 0;
+		//AS2_SendChar(rChar);
 		bypass2 = 1;
 	}
 	if(rChar == 'M'){
+		//AS2_SendChar(rChar);
 		Mx = 0;
 		bypass1 = 1;
+	}
+	
+	if(rChar == ':'){
+		estado_cam = 1;
 	}
 	
 }

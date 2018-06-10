@@ -50,10 +50,11 @@
 unsigned char CodError;
 unsigned short Reg_len = 20;
 unsigned char Reg_code[20] = {'C','R',' ','1','8',' ','3','6',' ','1','7',' ','2',' ','1','9',' ','3','2','\r'}; //CR [ reg1 value1 [reg2 value2 ... reg16 value16] ]\r  
-unsigned short Track_len = 25;
-unsigned char Track_code[25] = "TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
+unsigned short Track_len = 23;
+unsigned char Track_code[23] = "TC 182 206 21 29 84 94\r";//"TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
 unsigned int i = 0;
 unsigned char Mx= 0;
+bool estado_cam=0;
 
 void SetPWM_r_n(unsigned short porc, bool dir);
 void SetPWM_v_b(unsigned short porc, bool dir);
@@ -99,13 +100,42 @@ void main(void)
   
   AS1_SendChar('\r');
   
-  for(i = 0; i < Reg_len; i++){
-  	CodError = AS1_SendChar(Reg_code[i]);
+  while(estado == 0)
+  {
+    if(estado_cam == 1)
+      {
+        CodError = AS1_SendChar('\r');
+        estado_cam = 0;
+        estado = 1;
+      }
   }
-  	  
-  for(i = 0; i < Track_len; i++){
-  	CodError = AS1_SendChar(Track_code[i]);
+  
+  while(estado == 1)
+  {
+    if (estado_cam== 1){    //
+      for(i = 0; i < Reg_len; i++){
+        CodError = AS1_SendChar(Reg_code[i]);
+        //Cpu_Delay100US(1);
+      }
+      estado = 0;
+      estado_cam = 0;
+    }
   }
+  
+  while(estado == 0)
+  {
+    if (estado_cam== 1){    //
+      for(i = 0; i < Track_len; i++){
+        CodError = AS1_SendChar(Track_code[i]);
+        //Cpu_Delay100US(1);
+      }
+      estado = 1;
+      estado_cam = 0;
+    }
+  }
+  
+  estado = 0;
+  
   
   	  for(;;){
   		
