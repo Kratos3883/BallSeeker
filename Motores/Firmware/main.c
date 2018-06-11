@@ -34,9 +34,10 @@
 #include "Bit2.h"
 #include "PWM1.h"
 #include "PWM2.h"
+#include "AS1.h"
+#include "AS2.h"
 #include "Bit3.h"
 #include "Bit4.h"
-#include "AS1.h"
 #include "AD1.h"
 #include "TI1.h"
 /* Include shared modules, which are used for whole project */
@@ -87,6 +88,7 @@ void main(void)
   /* Write your code here */
   
   AD1_Start();
+  TI1_Enable();
   	  for(;;){
   		
   		  switch(estado)
@@ -136,12 +138,14 @@ void SetPWM_r_n(unsigned short porc, bool dir)
   	//porc=porc & 0x3f; //0x3f=0011 1111
   	PWM1_SetRatio16(porc);
   	Bit1_PutVal(dir);
+  	Bit4_PutVal(dir);
   }
 void SetPWM_v_b(unsigned short porc, bool dir)
   {
   	//porc= porc & 0x3f; //0x3f=0011 1111
   	PWM2_SetRatio16(porc);
   	Bit2_PutVal(dir);
+  	Bit3_PutVal(dir);
   }
   //La curva que describe mejor el comportamiento del Sharp en términos de distancia vs V, es un polinomio de 6to grado
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
@@ -165,7 +169,7 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		x = c6+c5+c4+c3+c2+c1+268.28;	
 		
 		//Se detiene si no hay obstáculo
-		if(x>=6 && x<=59)
+		if(x>=10 && x<=59)
 		{
 			dir_r_n = 0;	//adelante
 			dir_v_b = 0; 	//adelante
@@ -185,8 +189,8 @@ void SetPWM_v_b(unsigned short porc, bool dir)
   		
   		dir_r_n = 1;	//atras
 		dir_v_b = 1; 	//atras
-		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
+		duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+		duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
   	}
   }
 /* END main */
