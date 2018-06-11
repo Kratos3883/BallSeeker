@@ -37,6 +37,7 @@
 #include "Bit3.h"
 #include "Bit4.h"
 #include "AS1.h"
+#include "AS2.h"
 #include "AD1.h"
 #include "TI1.h"
 /* Include shared modules, which are used for whole project */
@@ -50,8 +51,8 @@
 unsigned char CodError;
 unsigned short Reg_len = 20;
 unsigned char Reg_code[20] = {'C','R',' ','1','8',' ','3','6',' ','1','7',' ','2',' ','1','9',' ','3','2','\r'}; //CR [ reg1 value1 [reg2 value2 ... reg16 value16] ]\r  
-unsigned short Track_len = 23;
-unsigned char Track_code[23] = "TC 182 206 21 29 84 94\r";//"TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
+unsigned short Track_len = 22;
+unsigned char Track_code[22] = "TC 49 69 37 53 84 102\r";//"TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
 unsigned int i = 0;
 unsigned char Mx= 0;
 bool estado_cam=0;
@@ -87,7 +88,7 @@ double x = 0;
      
 
 void main(void)
-{
+ {
   /* Write your local variable definition here */
 
   /*** Processor Expert internal initialization. DON'T REMOVE THIS CODE!!! ***/
@@ -97,6 +98,8 @@ void main(void)
   /* Write your code here */
   
   AD1_Start();
+  SetPWM_r_n(0, 1);
+  SetPWM_v_b(0, 1);
   
   AS1_SendChar('\r');
   
@@ -135,7 +138,7 @@ void main(void)
   }
   
   estado = 0;
-  
+  TI1_Enable();
   
   	  for(;;){
   		
@@ -144,19 +147,18 @@ void main(void)
   		  case ESPERAR:
   			  break;
   		  case UBICAR_PELOTA:
-  			  
   			  if(Mx<=35)
-  				  //Buscar objeto que está a la derecha
-  			  {
-  				duty_r_n=65535*0.35;
-  				duty_v_b=65535*0.30;
+				  //Buscar objeto que está a la derecha
+			  {
+				duty_r_n=65535*0.35;
+				duty_v_b=65535*0.20;
 				dir_r_n=1;
 				dir_v_b=0;
 				SetPWM_r_n(duty_r_n,dir_r_n);
 				SetPWM_v_b(duty_v_b,dir_v_b);
-  			  }
-  			  else if (Mx>=45)
-  				  //Buscar objeto que está a la izquierda
+			  }
+			  else if (Mx>=45)
+				  //Buscar objeto que está a la izquierda
 			  {
 				duty_r_n=65535*0.35;
 				duty_v_b=65535*0.30;
@@ -165,9 +167,10 @@ void main(void)
 				SetPWM_r_n(duty_r_n,dir_r_n);
 				SetPWM_v_b(duty_v_b,dir_v_b);
 			  }
-  			  else
-  				  estado=AVANZA;  				  			  
-  			  break;
+			  else
+				  estado=AVANZA;  				  			  
+			  break;
+		  
   		  case AVANZA:
 			AD1_Measure(TRUE);
 			AD1_GetValue16(&sharp); // guardo en sharp lo que midió el ADC del sensor
@@ -195,12 +198,14 @@ void SetPWM_r_n(unsigned short porc, bool dir)
   	//porc=porc & 0x3f; //0x3f=0011 1111
   	PWM1_SetRatio16(porc);
   	Bit1_PutVal(dir);
+  	Bit3_PutVal(dir);
   }
 void SetPWM_v_b(unsigned short porc, bool dir)
   {
   	//porc= porc & 0x3f; //0x3f=0011 1111
   	PWM2_SetRatio16(porc);
   	Bit2_PutVal(dir);
+  	Bit4_PutVal(dir);
   }
   //La curva que describe mejor el comportamiento del Sharp en términos de distancia vs V, es un polinomio de 6to grado
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
