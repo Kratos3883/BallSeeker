@@ -37,14 +37,14 @@
 #include "PE_Timer.h"
 #include "Bit1.h"
 #include "Bit2.h"
-#include "Bit3.h"
-#include "Bit4.h"
 #include "AD1.h"
 #include "TI1.h"
 #include "PWM1.h"
 #include "PWM2.h"
 #include "AS1.h"
 #include "AS2.h"
+#include "Bit3.h"
+#include "Bit4.h"
 
 extern int estado;
 extern unsigned char palabra_recepcion_PC1[15];

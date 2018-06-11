@@ -30,14 +30,14 @@
 #include "Events.h"
 #include "Bit1.h"
 #include "Bit2.h"
-#include "Bit3.h"
-#include "Bit4.h"
 #include "AD1.h"
 #include "TI1.h"
 #include "PWM1.h"
 #include "PWM2.h"
 #include "AS1.h"
 #include "AS2.h"
+#include "Bit3.h"
+#include "Bit4.h"
 /* Include shared modules, which are used for whole project */
 #include "PE_Types.h"
 #include "PE_Error.h"
@@ -65,8 +65,8 @@ int x = 0;
 unsigned char CodError;
 unsigned short Reg_len = 20;
 unsigned char Reg_code[20] = {'C','R',' ','1','8',' ','3','6',' ','1','7',' ','2',' ','1','9',' ','3','2','\r'}; //CR [ reg1 value1 [reg2 value2 ... reg16 value16] ]\r  
-unsigned short Track_len = 23;
-unsigned char Track_code[23] = "TC 182 206 21 29 84 94\r"; //"TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
+unsigned short Track_len = 25;
+unsigned char Track_code[25] = "TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
 unsigned char CR_code = '\r';
 unsigned int j = 0;
 unsigned char Mxy[2] = {0, 0}, Cxy[6] = {0, 0, 0, 0, 0, 0};	// Mxy -> (xmean, ymean), Cxy = (xleft, yleft, xright, yright, pixels, confidence)
@@ -84,45 +84,10 @@ void main(void)
   /* Write your code here */
   /*M1_SetDutyUS(337);*/
   
- while(estado == 0)
-  {
-	  if(estado_cam == 1)
-		  {
-			  CodError = AS1_SendChar('\r');
-			  estado_cam = 0;
-			  estado = 1;
-		  }
-  }
-  
-  while(estado == 1)
-  {
-	  if (estado_cam== 1){		//
-		  for(j = 0; j < Reg_len; j++){
-				CodError = AS1_SendChar(Reg_code[j]);
-				//Cpu_Delay100US(1);
-			}
-		  estado = 0;
-		  estado_cam = 0;
-	  }
-  }
-  
-  while(estado == 0)
-  {
-	  if (estado_cam== 1){		//
-		  for(j = 0; j < Track_len; j++){
-			  CodError = AS1_SendChar(Track_code[j]);
-			  //Cpu_Delay100US(1);
-			}
-		  estado = 1;
-		  estado_cam = 0;
-	  }
-  }
-  
-  estado = 0;
 
   for(;;) { 
 	  
-	  /*if (estado == 1){       //Get Mean enviar a
+	  if (estado == 1){       //Get Mean enviar a
 		 	AS1_SendChar(71);
 		  	AS1_SendChar(77);
 		  	AS1_SendChar(13);
@@ -181,9 +146,16 @@ void main(void)
 		 		//Cpu_Delay100US(1);
 		  	}
 		  estado = 0;
-	  }*/
+	  }
 	  
-  	  
+  	  if(estado_cam == 1){ 
+	  		
+		  	//AS2_SendChar('b');
+		  	//Cpu_Delay100US(10000);
+		  	AS1_RecvBlock(palabra_recepcion_CAM1,5,&enviados);
+		  	AS2_SendBlock(palabra_recepcion_CAM1,5,&enviados);
+	  		estado_cam=0;
+	  	}
   }
 
   /*** Don't write any code pass this line, or it will be deleted during code generation. ***/
