@@ -36,6 +36,14 @@
 #include "PWM2.h"
 #include "AS1.h"
 #include "AS2.h"
+#include "Bit5.h"
+#include "Bit6.h"
+#include "Bit7.h"
+#include "Bit8.h"
+#include "Bit9.h"
+#include "Bit10.h"
+#include "Bit11.h"
+#include "Bit12.h"
 #include "Bit3.h"
 #include "Bit4.h"
 #include "AD1.h"
@@ -55,11 +63,11 @@ unsigned int enviados=2;
 unsigned short sharp = 0;
 unsigned short sharp_temp = 0;
 float voltaje = 0;
-unsigned short duty_r_n = 10;//motor rojo-negro
-unsigned short duty_v_b = 10;//motor verde-blanco
+unsigned short duty_r_n = 0;//motor rojo-negro
+unsigned short duty_v_b = 0;//motor verde-blanco
 unsigned short duty;
-bool dir_r_n = 0;//motor rojo-negro
-bool dir_v_b = 0;//motor verde-blanco
+bool dir_r_n = 1;//motor rojo-negro
+bool dir_v_b = 1;//motor verde-blanco
 
 double p1=0;
 double p2=0;
@@ -109,19 +117,12 @@ void main(void)
   			  sharp = sharp>>4;		//los 4 bits menos significativos no guardan información
   			  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
   			  sharp_motores(voltaje);
-  			  estado = PWM_r_n;
+  			  SetPWM_r_n(duty_r_n,dir_r_n);
+  			  SetPWM_v_b(duty_v_b,dir_v_b);
+  			  estado = ESPERAR;
   			  /*Parte donde a partir de condicionales defino duty1 y duty2 dependiendo de lo que se lea en el ADC*/
   			  break;
-  		  case PWM_r_n: //Definir duty cycle motor rojo negro
-  			  SetPWM_r_n(duty_r_n,dir_r_n);
-  			  estado= PWM_v_b;
-  			  break;
-  		  case PWM_v_b: //Definir duty cycle motor verde blanco
-  			  SetPWM_v_b(duty_v_b,dir_v_b);
-  			  //estado=ESPERAR;
-  			  estado= PWM_set;
-  			  break;
-  		  
+  		   		  
   		  }
   		  
   		  
@@ -136,16 +137,18 @@ void main(void)
 void SetPWM_r_n(unsigned short porc, bool dir)
   {	
   	//porc=porc & 0x3f; //0x3f=0011 1111
-  	PWM1_SetRatio16(porc);
+	PWM1_SetDutyUS(porc);
+  	//PWM1_SetRatio16(porc);
   	Bit1_PutVal(dir);
-  	Bit4_PutVal(dir);
+  	Bit3_PutVal(dir);
   }
 void SetPWM_v_b(unsigned short porc, bool dir)
   {
   	//porc= porc & 0x3f; //0x3f=0011 1111
-  	PWM2_SetRatio16(porc);
+	PWM2_SetDutyUS(porc);
+	//PWM2_SetRatio16(porc);
   	Bit2_PutVal(dir);
-  	Bit3_PutVal(dir);
+  	Bit4_PutVal(dir);
   }
   //La curva que describe mejor el comportamiento del Sharp en términos de distancia vs V, es un polinomio de 6to grado
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
@@ -169,28 +172,31 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		x = c6+c5+c4+c3+c2+c1+268.28;	
 		
 		//Se detiene si no hay obstáculo
-		if(x>=10 && x<=59)
+		if(x>=9 && x<=59)
 		{
 			dir_r_n = 0;	//adelante
 			dir_v_b = 0; 	//adelante
-			duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-			duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+			duty_r_n= PWMf_r_n;
+			duty_v_b= PWMf_v_b;
+			//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+			//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
 		}
-		if(x>59)
+		else if(x>59 || (7<x && x<9))
 		{
 			duty_r_n = 0;
 			duty_v_b = 0;
+			dir_r_n = 1;	//adelante
+			dir_v_b = 1; 	//adelante
 		}
-		
-  	
   	}
   	else
   	{
-  		
   		dir_r_n = 1;	//atras
 		dir_v_b = 1; 	//atras
-		duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-		duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
+		duty_r_n= PWMb_r_n;
+		duty_v_b= PWMb_v_b;
+		//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+		//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
   	}
   }
 /* END main */

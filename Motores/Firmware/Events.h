@@ -41,6 +41,14 @@
 #include "PWM2.h"
 #include "AS1.h"
 #include "AS2.h"
+#include "Bit5.h"
+#include "Bit6.h"
+#include "Bit7.h"
+#include "Bit8.h"
+#include "Bit9.h"
+#include "Bit10.h"
+#include "Bit11.h"
+#include "Bit12.h"
 #include "Bit3.h"
 #include "Bit4.h"
 #include "AD1.h"
@@ -51,6 +59,11 @@
 #define PWM_v_b 1
 #define ESPERAR 2
 #define PWM_set 3
+
+#define PWMf_r_n 523
+#define PWMf_v_b 550
+#define PWMb_r_n 510
+#define PWMb_v_b 510
 
 
 extern unsigned char estado;
