@@ -42,10 +42,7 @@
 #include "Bit6.h"
 #include "Bit7.h"
 #include "Bit8.h"
-#include "Bit9.h"
-#include "Bit10.h"
-#include "Bit11.h"
-#include "Bit12.h"
+
 #include "AD1.h"
 #include "TI1.h"
 /* Include shared modules, which are used for whole project */
@@ -78,6 +75,9 @@ unsigned short duty_r_n = 0;//motor rojo-negro
 unsigned short duty_v_b = 0;//motor verde-blanco
 bool dir_r_n = 0;//motor rojo-negro
 bool dir_v_b = 0;//motor verde-blanco
+short error_theta=0;
+unsigned short P_der=0.8; //Constante de control proporcional
+unsigned short P_izq=5; //Constante de control proporcional
 
 double p1=0;
 double p2=0;
@@ -92,8 +92,7 @@ double c3= 0;
 double c2= 0;
 double c1= 0;
 double x = 0;
-
-
+float x_prev=0, x_delta=0;
      
 
 void main(void)
@@ -158,33 +157,33 @@ void main(void)
   TI1_Enable();
   
   	  for(;;){
+
+  		  
   		
   		  switch(estado)
   		  {
   		  case ESPERAR:
   			  break;
   		  case UBICAR_PELOTA:
-  			  if(Mx<=15)
+  			  error_theta=Mx-40;
+  			  if(error_theta<-10)
 				  //Buscar objeto que está a la derecha
 			  {
+  				  
   				duty_r_n=PWMb_r_n;
-  				duty_v_b=PWMf_v_b;
-				//duty_r_n=65535*0.35;
-				//duty_v_b=65535*0.30;
-				dir_r_n=1;
+  				duty_v_b=PWMf_v_b + error_theta*P_der;
+				dir_r_n=0;
 				dir_v_b=0;
 				SetPWM_r_n(duty_r_n,dir_r_n);
 				SetPWM_v_b(duty_v_b,dir_v_b);
 			  }
-			  else if (Mx>=65)
+			  else if (error_theta>10)
 				  //Buscar objeto que está a la izquierda
 			  {
 				duty_r_n=PWMf_r_n;
-				duty_v_b=PWMb_v_b;
-				//duty_r_n=65535*0.35;
-				//duty_v_b=65535*0.30;
+				duty_v_b=PWMb_v_b + error_theta*P_izq;
 				dir_r_n=0;
-				dir_v_b=1;
+				dir_v_b=0;
 				SetPWM_r_n(duty_r_n,dir_r_n);
 				SetPWM_v_b(duty_v_b,dir_v_b);
 			  }
@@ -236,17 +235,18 @@ void SetPWM_v_b(unsigned short porc, bool dir)
   {
   	if(v<=1.92)//Pico maximo de la curva
   	{ 
-  		p2 = v*v; 	// v^2
+  		/*p2 = pow(v,2); 	// v^2
 		p3 = p2*v;	//v^3
 		p4 = p3*v;	//v^4
 		p5 = p4*v;	//v^5
-		p6 = p5*v;	//v^6
+		p6 = p5*v;	//v^6*/
+  		
 		//multiplicación por coeficientes del polinomio
-		c6 = 56.1*p6;
-		c5 = -441.64*p5;
-		c4 = 1413.3*p4;
-		c3 = -2364.4*p3;
-		c2 = 2207.7*p2;
+		c6 = 56.1*pow(v,6);
+		c5 = -441.64*pow(v,5);
+		c4 = 1413.3*pow(v,4);
+		c3 = -2364.4*pow(v,3);
+		c2 = 2207.7*pow(v,2);
 		c1 = -1124.3*v;
 		
 		x = c6+c5+c4+c3+c2+c1+268.28;	
@@ -254,10 +254,12 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		//Se detiene si no hay obstáculo
 		if(x>=9 && x<=59)
 		{
+			x_delta=x-x_prev;
 			dir_r_n = 0;	//adelante
 			dir_v_b = 0; 	//adelante
-			duty_r_n= PWMf_r_n;
-			duty_v_b= PWMf_v_b;
+			duty_r_n= PWMf_r_n + x_delta;
+			duty_v_b= PWMf_v_b + x_delta;
+			x_prev=x;
 			//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
 			//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
 		}
