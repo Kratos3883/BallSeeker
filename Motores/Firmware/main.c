@@ -38,6 +38,14 @@
 #include "Bit4.h"
 #include "AS1.h"
 #include "AS2.h"
+#include "Bit5.h"
+#include "Bit6.h"
+#include "Bit7.h"
+#include "Bit8.h"
+#include "Bit9.h"
+#include "Bit10.h"
+#include "Bit11.h"
+#include "Bit12.h"
 #include "AD1.h"
 #include "TI1.h"
 /* Include shared modules, which are used for whole project */
@@ -51,11 +59,12 @@
 unsigned char CodError;
 unsigned short Reg_len = 20;
 unsigned char Reg_code[20] = {'C','R',' ','1','8',' ','3','6',' ','1','7',' ','2',' ','1','9',' ','3','2','\r'}; //CR [ reg1 value1 [reg2 value2 ... reg16 value16] ]\r  
-unsigned short Track_len = 22;
-unsigned char Track_code[22] = "TC 49 69 37 53 84 102\r";//"TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
+unsigned short Track_len = 23;
+unsigned char Track_code[23] = "TC 45 75 32 60 102 126\r";//"TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
 unsigned int i = 0;
 unsigned char Mx= 0;
 bool estado_cam=0;
+unsigned char rChar = 0;
 
 void SetPWM_r_n(unsigned short porc, bool dir);
 void SetPWM_v_b(unsigned short porc, bool dir);
@@ -103,6 +112,12 @@ void main(void)
   
   AS1_SendChar('\r');
   
+  Bit5_PutVal(0);
+  
+  //Cpu_Delay100US(20000);
+ 
+  //AS1_SendChar('\r');
+    
   while(estado == 0)
   {
     if(estado_cam == 1)
@@ -138,6 +153,8 @@ void main(void)
   }
   
   estado = 0;
+  Bit5_PutVal(1);
+  Bit7_PutVal(1);
   TI1_Enable();
   
   	  for(;;){
@@ -147,21 +164,25 @@ void main(void)
   		  case ESPERAR:
   			  break;
   		  case UBICAR_PELOTA:
-  			  if(Mx<=35)
+  			  if(Mx<=15)
 				  //Buscar objeto que está a la derecha
 			  {
-				duty_r_n=65535*0.35;
-				duty_v_b=65535*0.20;
+  				duty_r_n=PWMb_r_n;
+  				duty_v_b=PWMf_v_b;
+				//duty_r_n=65535*0.35;
+				//duty_v_b=65535*0.30;
 				dir_r_n=1;
 				dir_v_b=0;
 				SetPWM_r_n(duty_r_n,dir_r_n);
 				SetPWM_v_b(duty_v_b,dir_v_b);
 			  }
-			  else if (Mx>=45)
+			  else if (Mx>=65)
 				  //Buscar objeto que está a la izquierda
 			  {
-				duty_r_n=65535*0.35;
-				duty_v_b=65535*0.30;
+				duty_r_n=PWMf_r_n;
+				duty_v_b=PWMb_v_b;
+				//duty_r_n=65535*0.35;
+				//duty_v_b=65535*0.30;
 				dir_r_n=0;
 				dir_v_b=1;
 				SetPWM_r_n(duty_r_n,dir_r_n);
@@ -196,14 +217,16 @@ void main(void)
 void SetPWM_r_n(unsigned short porc, bool dir)
   {	
   	//porc=porc & 0x3f; //0x3f=0011 1111
-  	PWM1_SetRatio16(porc);
+	PWM1_SetDutyUS(porc);
+  	//PWM1_SetRatio16(porc);
   	Bit1_PutVal(dir);
   	Bit3_PutVal(dir);
   }
 void SetPWM_v_b(unsigned short porc, bool dir)
   {
   	//porc= porc & 0x3f; //0x3f=0011 1111
-  	PWM2_SetRatio16(porc);
+	PWM2_SetDutyUS(porc);
+	//PWM2_SetRatio16(porc);
   	Bit2_PutVal(dir);
   	Bit4_PutVal(dir);
   }
@@ -229,28 +252,31 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		x = c6+c5+c4+c3+c2+c1+268.28;	
 		
 		//Se detiene si no hay obstáculo
-		if(x>=6 && x<=59)
+		if(x>=9 && x<=59)
 		{
 			dir_r_n = 0;	//adelante
 			dir_v_b = 0; 	//adelante
-			duty_r_n=65535*0.45; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-			duty_v_b=65535*0.4; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+			duty_r_n= PWMf_r_n;
+			duty_v_b= PWMf_v_b;
+			//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+			//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
 		}
-		if(x>59)
+		else if(x>59 || (7<x && x<9))
 		{
 			duty_r_n = 0;
 			duty_v_b = 0;
+			dir_r_n = 1;	//adelante
+			dir_v_b = 1; 	//adelante
 		}
-		
-  	
   	}
   	else
   	{
-  		
   		dir_r_n = 1;	//atras
 		dir_v_b = 1; 	//atras
-		duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-		duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
+		duty_r_n= PWMb_r_n;
+		duty_v_b= PWMb_v_b;
+		//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+		//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
   	}
   }
 /* END main */

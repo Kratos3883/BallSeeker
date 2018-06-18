@@ -33,7 +33,8 @@
 
 extern unsigned char Mx;
 extern bool estado_cam;
-bool bypass1 = 0, bypass2 = 0;
+bool bypass1 = 0, bypass2 = 0, bypass3 = 0;
+extern unsigned char rChar;
 
 
 /* User includes (#include below this line is not maintained by Processor Expert) */
@@ -77,7 +78,7 @@ void  AS1_OnRxChar(void)
 {
 	/*Interrupción de puerto serial*/
 	
-	unsigned char rChar = 0;
+	rChar = 0;
 		
 	//estado_cam = 1; 
 	AS1_RecvChar(&rChar);
@@ -101,11 +102,18 @@ void  AS1_OnRxChar(void)
 		//AS2_SendChar(rChar);
 		Mx = 0;
 		bypass1 = 1;
+		Bit6_NegVal();
 	}
 	
 	if(rChar == ':'){
 		estado_cam = 1;
 	}
+	
+	if(rChar == 'U'){
+		Bit7_PutVal(0);
+	}
+	
+	
 	
 }
 
@@ -196,6 +204,7 @@ void AD1_OnEnd(void)
 */
 void TI1_OnInterrupt(void)
 {
+	Bit8_NegVal();
 	if(estado==ESPERAR)
 		estado=UBICAR_PELOTA;
 
