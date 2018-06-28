@@ -1,0 +1,56 @@
+And here is some pseudo code for the discrete version of the PID controller:
+
+    error_prior = 0
+    integral = 0
+    KP = Some value you need to come up (see tuning section below)
+    KI = Some value you need to come up (see tuning section below)
+    KD = Some value you need to come up (see tuning section below)
+
+    while(1) {
+        error = desired_value – actual_value
+        integral = integral + (error*iteration_time)
+        derivative = (error – error_prior)/iteration_time
+        output = KP*error + KI*integral + KD*derivative + bias
+        error_prior = error
+        sleep(iteration_time)
+    } 
+
+Also while you usually do not see the bias term added to the filter, I like to put it in just in case everything else sums to 0 I will not have a 0 as the output. This is not strictly needed but it is nice to have in many cases. The bias term is usually a small value (<1)
+
+http://robotsforroboticists.com/pid-control/
+
+
+-----------------------------------------------------------------------------
+Assuming the the loop running time is small enough (a slow process), we can use the following function for calculating output,
+
+output = Kp * err + (Ki * int * dt) + (Kd * der /dt);
+
+where
+
+Kp = Proptional Constant.
+Ki = Integral Constant.
+Kd = Derivative Constant.
+err = Expected Output - Actual Output ie. error;
+int  = int from previous loop + err; ( i.e. integral error )
+der  = err - err from previous loop; ( i.e. differential error)
+dt = execution time of loop.
+
+where initially 'der' and 'int' would be zero. If you use a delay function in code to tune the loop frequency to say 1 KHz then your dt would be 0.001 seconds.
+Drawning in C
+
+I found this excellent code for PID in C, though it doesn't cover every aspect of it, its a good one nonetheless.
+
+//get value of setpoint from user
+while(1){
+  // reset Timer
+  // write code to escape loop on receiving a keyboard interrupt.
+  // read the value of Vin from ADC ( Analogue to digital converter).
+  // Calculate the output using the formula discussed previously.
+  // Apply the calculated outpout to DAC ( digital to analogue converter).
+  // wait till the Timer reach 'dt' seconds.
+}
+
+https://softwareengineering.stackexchange.com/questions/186124/programming-pid-loops-in-c
+
+-------------------------------------------------------------------------------
+
