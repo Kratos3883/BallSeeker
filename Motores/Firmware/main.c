@@ -57,33 +57,18 @@
 /* User includes (#include below this line is not maintained by Processor Expert) */
 void SetPWM_r_n(unsigned short porc, bool dir);
 void SetPWM_v_b(unsigned short porc, bool dir);
-void sharp_motores(float c);
+void sharp_motores(unsigned short v);
 unsigned char estado= PWM_set;
 unsigned int enviados=2;
 unsigned short sharp = 0;
 unsigned short sharp_temp = 0;
-float voltaje = 0;
 unsigned short duty_r_n = 0;//motor rojo-negro
 unsigned short duty_v_b = 0;//motor verde-blanco
 unsigned short duty;
 bool dir_r_n = 1;//motor rojo-negro
 bool dir_v_b = 1;//motor verde-blanco
 
-double p1=0;
-double p2=0;
-double p3=0;
-double p4=0;
-double p5=0;
-double p6=0;
-double c6= 0;
-double c5= 0;
-double c4= 0;
-double c3= 0;
-double c2= 0;
-double c1= 0;
-double x = 0;
 
-     
 
 void main(void)
 {
@@ -115,8 +100,7 @@ void main(void)
   			  AD1_Measure(TRUE);
   			  AD1_GetValue16(&sharp); // guardo en sharp lo que midió el ADC del sensor
   			  sharp = sharp>>4;		//los 4 bits menos significativos no guardan información
-  			  voltaje = sharp*1.92/2440; // guardo la lectura como voltaje; (max medido ADC)1.96V->0xFFF=4095  
-  			  sharp_motores(voltaje);
+  			  sharp_motores(sharp);
   			  SetPWM_r_n(duty_r_n,dir_r_n);
   			  SetPWM_v_b(duty_v_b,dir_v_b);
   			  estado = ESPERAR;
@@ -152,8 +136,43 @@ void SetPWM_v_b(unsigned short porc, bool dir)
   }
   //La curva que describe mejor el comportamiento del Sharp en términos de distancia vs V, es un polinomio de 6to grado
   //En esta función se determina a que distancia corresponde el voltaje leído (v)
-  void sharp_motores(float v)
+  void sharp_motores(unsigned short v)
   {
+    	if(v<=2000)//Pico maximo de la curva
+    	{ 
+    		//multiplicación por coeficientes del polinomio
+  		
+  		//Se detiene si no hay obstáculo
+  		if(v>=300 && v<=1300)
+  		{
+  			
+  			dir_r_n = 0;	//adelante
+  			dir_v_b = 0; 	//adelante
+  			duty_r_n= PWMf_r_n;//+(Vref-v)*Kp_r_n;
+  			duty_v_b= PWMf_v_b;//+(Vref-v)*Kp_v_b;
+  			//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+  			//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+  			
+  		}
+  		else
+  		{
+  			duty_r_n = 0;
+  			duty_v_b = 0;
+  			dir_r_n = 1;	
+  			dir_v_b = 1; 	
+  		}
+    	}
+    	else
+    	{
+    		dir_r_n = 1;	//atras
+  		dir_v_b = 1; 	//atras
+  		duty_r_n= PWMb_r_n;
+  		duty_v_b= PWMb_v_b;
+  		//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
+  		//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
+    	}
+  }
+  /*{
   	if(v<=1.92)//Pico maximo de la curva
   	{ 
   		p2 = v*v; 	// v^2
@@ -198,7 +217,7 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
 		//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
   	}
-  }
+  }*/
 /* END main */
 /*!
 ** @}
