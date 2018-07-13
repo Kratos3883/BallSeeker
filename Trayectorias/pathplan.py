@@ -36,9 +36,9 @@ k_obj = 0.2
 k_obs = 7
 k_obs_s = 0.1
 m = 1
-e_theta_range = 35
-pwm_r_n_base = 62
-pwm_v_b_base = 67
+e_theta_range = 25
+pwm_r_n_base = 52
+pwm_v_b_base = 57
 
 # nx = int(input("Tamaño en X de la cancha: "))
 # ny = int(input("Tamaño en Y de la cancha: "))
@@ -87,8 +87,6 @@ while 1:
             rx_front = result[i][0][0]*100
             ry_front = result[i][0][1]*100
             car_points = car_points+1
-
-    #TODO: calcular potencial con solo un objetivo
 
     Nobj = [val for sublist in result for val in sublist].count('RED')
     Nobs = len(result) - Nobj - car_points
@@ -153,17 +151,15 @@ while 1:
         Uobj = np.zeros([nx,ny])
         Uobs = np.zeros([nx,ny])
         
-        r_obj_min = 200
+        r_obj = 0
         
         for i in range(Nobj):
-            
-            r_obj = np.sqrt((xx - Objx[i])**2 + (yy - Objy[i])**2)
 
-            Uobj = Uobj + k_obj * (r_obj)**2
-
-            #if r_obj < r_obj_min:
-            r_obj_min = r_obj
+            if i == np.argmin(Dobjx**2 + Dobjy**2):
             
+                r_obj = np.sqrt((xx - Objx[i])**2 + (yy - Objy[i])**2)
+                Uobj = Uobj + k_obj * (r_obj)**2
+
         for i in range(Nobs):
             
             r_obs = np.sqrt((xx - (rx - rx_front) - Obsx[i])**2 + (yy - (ry - ry_front) - Obsy[i])**2)
@@ -176,6 +172,13 @@ while 1:
             Uobs = Uobs + k_obs * (r_obs_z+0.02)**-1
 
     Uesp = Uobj + Uobs
+
+    for i in range(10):
+        for j in range(42):
+            for k in range(42):
+                if j - 21 > 0 and k - 21 > 0 and j + 21 < nx -1 and k + 21 < ny -1:
+                    Uesp[k-21][j-21] = 0.25 * (Uesp[k-22][j-22] + Uesp[k-22][j-20] + Uesp[k-20][j-22] + Uesp[k-20][j-20])
+
     
     Fespy, Fespx = np.gradient(-k_f * Uesp)
 
