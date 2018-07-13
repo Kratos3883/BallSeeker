@@ -4,7 +4,6 @@ import urllib.request
 import json
 import serial
 
-'''
 ser = serial.Serial(
 	    port='/dev/rfcomm0', #'/dev/ttyUSB0',#'/dev/ttyACM0',
 	    baudrate=9600,
@@ -20,8 +19,6 @@ try:
 except Exception:
     print('Error abriendo el puerto')
 
-'''
-
 N = 10
 beta = 0.2
 a = 1
@@ -34,11 +31,7 @@ Umin = 0
 alpha0 = 0
 k_obj = 0.2
 k_obs = 7
-k_obs_s = 0.1
 m = 1
-e_theta_range = 35
-pwm_r_n_base = 62
-pwm_v_b_base = 67
 
 # nx = int(input("Tamaño en X de la cancha: "))
 # ny = int(input("Tamaño en Y de la cancha: "))
@@ -88,19 +81,18 @@ while 1:
             ry_front = result[i][0][1]*100
             car_points = car_points+1
 
-    #TODO: calcular potencial con solo un objetivo
 
     Nobj = [val for sublist in result for val in sublist].count('RED')
     Nobs = len(result) - Nobj - car_points
 
     if car_points == 2:
         car_theta = np.arctan2( (ry_front-ry_rear) , (rx_front-rx_rear))
-        #print('car_theta = {}'.format(car_theta))
+        print('car_theta = {}'.format(car_theta))
         rx_prev = rx
         ry_prev = ry
         rx = (rx_front+rx_rear)/2
         ry = (ry_front+ry_rear)/2
-        #print('(rx,ry) = ({},{})'.format(rx,ry))
+        print('(rx,ry) = ({},{})'.format(rx,ry))
         vx_real = abs(rx-rx_prev)
         vy_real = abs(ry-ry_prev)
 
@@ -124,15 +116,13 @@ while 1:
                 
                 Objx[Obji] = result[i][0][0]*100
                 Objy[Obji] = result[i][0][1]*100
-                #print('(Objx,Objy) = ({},{})'.format(Objx,Objy))
+                print('(Objx,Objy) = ({},{})'.format(Objx,Objy))
                 Obji = Obji +1
          
         Dobjx = Objx - rx
         Dobjy = Objy - ry
 
-        Dobj = np.sqrt(Dobjx**2 + Dobjy**2) 
-
-        for i in range(len(result)):
+        for i in range(Nobs):
             
             # Obsx[i] = int(input("Coordenada en X del obstáculo #%d: "%i)) % nx
             # Obsy[i] = int(input("Coordenada en Y del obstáculo #%d: "%i)) % ny
@@ -140,95 +130,143 @@ while 1:
             if(result[i][2] != 'RED' and result[i][2] !='GREEN' and result[i][2] !='YELLOW'):
                 Obsx[Obsi] = result[i][0][0]*100
                 Obsy[Obsi] = result[i][0][1]*100
+                print('(Obsx,Obsy) = ({},{})'.format(Obsx,Obsy))
 
                 Obsi = Obsi +1
-
-        print('(Obsx,Obsy) = ({},{})'.format(Obsx,Obsy))
                 
         Dobsx = Obsx - rx
         Dobsy = Obsy - ry
 
-        Dobs = np.sqrt(Dobsx**2 + Dobsy**2) 
-
         Uobj = np.zeros([nx,ny])
         Uobs = np.zeros([nx,ny])
-        
-        r_obj_min = 200
-        
+    
         for i in range(Nobj):
             
-            r_obj = np.sqrt((xx - Objx[i])**2 + (yy - Objy[i])**2)
-
-            Uobj = Uobj + k_obj * (r_obj)**2
-
-            #if r_obj < r_obj_min:
-            r_obj_min = r_obj
+            Uobj = Uobj + k_obj * ((xx - Objx[i])**2 + (yy - Objy[i])**2)
             
         for i in range(Nobs):
             
-            r_obs = np.sqrt((xx - (rx - rx_front) - Obsx[i])**2 + (yy - (ry - ry_front) - Obsy[i])**2)
-
-            obs_z = r_obs > 20 #and r_obs > r_obj_min
-            obs_z = obs_z.astype(int)
-
-            r_obs_z = np.multiply(r_obs, obs_z)
-
-            Uobs = Uobs + k_obs * (r_obs_z+0.02)**-1
-
+            Uobs = Uobs + k_obs * (np.sqrt((xx - Obsx[i])**2 + (yy - Obsy[i])**2))**-1
+    
     Uesp = Uobj + Uobs
     
     Fespy, Fespx = np.gradient(-k_f * Uesp)
-
-    vx = Fespx * dt/m # Ventana de integracion de tamano 1
-    vy = Fespy * dt/m
-
-    #print('(vx,vy) = ({},{})'.format(vx[int(ry)][int(rx)],vy[int(ry)][int(rx)]))
+    #Fprox = (- alpha0 + beta * (vx**2 + vy**2)) * vx
+    #Fproy = (- alpha0 + beta * (vx**2 + vy**2)) * vy
+    Fprox = 0
+    Fproy = 0
     
     
-    plt.quiver(xx,yy,vx,vy,Uesp)
-    plt.contour(xx,yy,Uesp)
-    plt.show()
+    # Umin = Piecewise[{Uesp(R), iUmin>=Uesp(R)},{Umin, iUmin<Uesp(R)}]
+    
+    # Fint_i = -a (r_i - R) = -(a/N) Sum[r_i - r_j, {j,1,N}]
+    # Fest_i = NormalDist[mu=0, sigma=sqrt(D)]
+    
+    
+    # r_i(n) = r_i(n-1) + v_i dt
+    vx = (Fprox + Fespx) * dt/m #vx + (Fprox + Fespx) * dt/m
+    vy = (Fproy + Fespy) * dt/m #vy + (Fproy + Fespy) * dt/m
+
+    print('(vx,vy) = ({},{})'.format(vx[int(ry)][int(rx)],vy[int(ry)][int(rx)]))
+    
+    for i in range(nx):
+        for j in range(ny):
+            if vx[i][j] > 1000:
+                vx[i][j] = 1000
+            elif vx[i][j] < -1000:
+                vx[i][j] = -1000
+
+    for i in range(nx):
+        for j in range(ny):
+            if vy[i][j] > 1000:
+                vy[i][j] = 1000
+            elif vy[i][j] < -1000:
+                vy[i][j] = -1000
+
+    # alpha_e(n) = alpha_e(n-1) + dt Piecewise[{tau_c, Umin >= Uesp(R)}, {-tau_c, Umin < Uesp(R)}]
+    
+    
+    
+    #print(Uesp)
+    # plt.imshow(Uesp)
+    # plt.colorbar()
+    
+    #print('vx = {}'.format(vx))
+    #print('vy = {}'.format(vy))
+    #print('vx[int(rx)] = {}'.format(vx[int(rx)]))
+    #print('vy[int(rx)] = {}'.format(vy[int(rx)]))
+    #print('xx = {}'.format(xx))
+    #print('yy = {}'.format(yy))
+
 
 
     if car_points == 2:
 
         v_theta = np.arctan2( vy[int(ry)][int(rx)] , vx[int(ry)][int(rx)])
-        #print('v_theta = {}'.format(v_theta))
+        print('v_theta = {}'.format(v_theta))
 
         e_theta = v_theta - car_theta
-
-        e_theta = e_theta *e_theta_range/(np.pi) + e_theta_range
-    
-        e_theta = e_theta % (2*e_theta_range)
-        e_theta = e_theta - e_theta_range
-
-        #if np.any( Dobs < 25):
-            #e_theta = (e_theta_range/2) * ( e_theta / np.abs(e_theta))
-
-        pwm_r_n = int(pwm_r_n_base + e_theta)
-        pwm_v_b = int(pwm_v_b_base - e_theta)
-
-        #print('e_theta = {}'.format(e_theta))
-        #print('PWM = ({},{})'.format(pwm_r_n, pwm_v_b))
-    
-        #print('Dobj = {}'.format(Dobj))
-
-        print('Dobs = {}'.format(Dobs))
     
         '''
+        if e_theta > np.pi:
+            e_theta = e_theta - 2*np.pi
+        elif e_theta < -np.pi:
+            e_theta = 2*np.pi + e_theta
+        '''
+
+        e_theta = e_theta*40/(np.pi) + 40
+    
+        e_theta = int(e_theta)
+
+        e_theta = e_theta % 80
+
+        '''
+        if e_theta < 32:
+            e_theta = 0
+        elif e_theta > 45:
+            e_theta = 80
+        '''
+
+
+        e_theta = int(e_theta)
+
+        print('e_theta = {}'.format(e_theta))
+    
+        e_theta = e_theta.to_bytes(1, 'little', signed = False)
+    
+        print(e_theta)
+    
+        #plt.quiver(xx,yy,vx,vy,Uesp)
+        #plt.contour(xx,yy,Uesp)
+        
+        
+        # r_i(n) = r_i(n-1) + v_i dt
+        
+        
+        # z = np.sin((xx**2 + yy**2)*0.1)
+        # h = plt.contourf(x,y,z)
+        #plt.show()
+        Dobj = np.sqrt(Dobjx**2 + Dobjy**2) 
+        print('Dobj = {}'.format(Dobj))
+
         if ser.isOpen() and np.all(Dobj > 15) and Nobj > 0:
             ser.write(b'\xFF')
-            #print(b'\xFF')
-            ser.write(pwm_r_n.to_bytes(1, 'little', signed = False))
-            #print(pwm_r_n.to_bytes(1, 'little', signed = False))
-            ser.write(pwm_v_b.to_bytes(1, 'little', signed = False))
-            #print(pwm_v_b.to_bytes(1, 'little', signed = False))
+            ser.write(e_theta)
+            ser.write(b'\x00')
 
-        elif ser.isOpen() and ( (np.any(Dobj < 15) and Nobj > 0) or Nobj == 0):
+        #elif ser.isOpen() and np.any(Dobj) <= 15 and np.all(Dobj >= 12 ) and Nobj > 0:
+            #ser.write(b'\xFF')
+            #ser.write(e_theta)
+            #ser.write(b'\x01')
+        
+        elif ser.isOpen() and np.any(Dobj < 15) and Nobj > 0:
             ser.write(b'\xFF')
-            #print(b'\xFF')
-            ser.write((0x80).to_bytes(1, 'little', signed = False))
-            #print((0x80).to_bytes(1, 'little', signed = False))
-            ser.write((0x80).to_bytes(1, 'little', signed = False))
-            #print((0x80).to_bytes(1, 'little', signed = False))
-        '''
+            ser.write(e_theta)
+            ser.write(b'\x01')
+
+        elif ser.isOpen() and Nobj == 0:
+            ser.write(b'\xFF')
+            ser.write(e_theta)
+            ser.write(b'\x03')
+    
+
