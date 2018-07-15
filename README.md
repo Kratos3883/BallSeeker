@@ -3,4 +3,5 @@ El presente trabajo consiste en el desarrollo de un robot móvil que sea capaz d
 
 Para lograr lo antes propuesto, abordo del robot está un microcontrolador DemoQE128 que envia señales a los motores para avanzar, mientras que una cámara colocada en lo alto del lugar trabaja con un programa que identifica los objetivos, los obstáculos y al robot, envía a un servidor las coordenadas de cada elemento en la cancha y un programa en la PC (pathplanner) toma estos datos y realiza la planificación de la trayectoria que el carro debe seguir para alcanzar los objetivos y guiarlos a la meta evitando obstáculos. Establecida la trayectoria, el pathplanner le envía al carro vía Bluetooth el porcentaje de duty cycle que debe tener cada rueda.
 
-<video src="https://github.com/Kratos3883/BallSeeker/blob/master/Wiki/VID-20180714-WA0005 (convert-video-online.com).mp4" width="300" height="208"></video> 
+
+[![TITLE](https://img.youtube.com/vi/nvuCGQraHNY)](https://www.youtube.com/watch?v=nvuCGQraHNY)
