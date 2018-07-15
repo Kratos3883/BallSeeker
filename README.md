@@ -6,3 +6,11 @@ Para lograr lo antes propuesto, abordo del robot está un microcontrolador DemoQ
 Para ver una muestra de su funcionamiento:
 
 [![Funcionamiento del carro](https://img.youtube.com/vi/nvuCGQraHNY/0.jpg)](https://www.youtube.com/watch?v=nvuCGQraHNY)
+
+Este proyecto tuvo un par de etapas antes de su culminación
+## Avanzar en línea recta
+  Se debe determinar cual es el porcentaje de duty cycle que debe aplicarsele a cada motor para que en conjunto avancen y retrocedan en línea recta.
+### Acercarse y alejarse de objetivo
+   Con la utilización de un sensor de proximidad fue posible lograr que el carro se acerque a un objeto hasta hallarse a una distancia de apoximadamente 6cm y mantener esa distancia de separación, retrocede o avanza según sea necesario. Para ver el código utilizado ver en la carpeta de Adelante-Atras.
+### Seguir color "perrito"
+   El robot con una cámara abordo es capaz de seguir una pelota de un color determinado, se alínea en la dirección en la que la encuentra, se acerca ella y mantiene una distancia de separación constante.
