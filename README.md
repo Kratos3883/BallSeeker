@@ -10,10 +10,12 @@ Para ver una muestra de su funcionamiento:
 
 [![Funcionamiento del carro](https://img.youtube.com/vi/nvuCGQraHNY/0.jpg)](https://www.youtube.com/watch?v=nvuCGQraHNY)
 
+En la carpeta ([BallSeeker](https://github.com/Kratos3883/BallSeeker/tree/master/BallSeeker)) encontrarán los códigos desarrollados e implementados.
+
 Este proyecto tuvo un par de etapas antes de su culminación
 ### Avanzar en línea recta
-  Se debe determinar cual es el porcentaje de duty cycle que debe aplicarsele a cada motor para que en conjunto avancen y retrocedan en línea recta.
+  Se debe determinar cual es el porcentaje de duty cycle que debe aplicarsele a cada motor para que en conjunto avancen y retrocedan en línea recta. En la carpeta ([PWM_Set](https://github.com/Kratos3883/BallSeeker/tree/master/PWM_Set)) encontrarán los códigos desarrollados e implementados.
 ### Mantener distancia objeto-carro constante
-   Con la utilización de un sensor de proximidad fue posible lograr que el carro se acerque a un objeto hasta hallarse a una distancia de apoximadamente 6cm y mantener esa distancia de separación, retrocede o avanza según sea necesario. Para ver el código utilizado ver en la carpeta de Adelante-Atras.
+   Con la utilización de un sensor de proximidad fue posible lograr que el carro se acerque a un objeto hasta hallarse a una distancia de apoximadamente 6cm y mantener esa distancia de separación, retrocede o avanza según sea necesario. En la carpeta ([Adelante-Atras](https://github.com/Kratos3883/BallSeeker/tree/master/Adelante-Atras)) encontrarán los códigos desarrollados e implementados.
 ### Seguir color "perrito"
-   El robot con una cámara abordo es capaz de seguir una pelota de un color determinado, se alínea en la dirección en la que la encuentra, se acerca ella y mantiene una distancia de separación constante.
+   El robot con una cámara abordo es capaz de seguir una pelota de un color determinado, se alínea en la dirección en la que la encuentra, se acerca ella y mantiene una distancia de separación constante. En la carpeta ([Sigue_color](https://github.com/Kratos3883/BallSeeker/tree/master/Sigue_color)) encontrarán los códigos desarrollados e implementados.
