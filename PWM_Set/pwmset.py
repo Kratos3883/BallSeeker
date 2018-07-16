@@ -4,7 +4,6 @@ import urllib.request
 import json
 import serial
 
-# Configuración comunicación por Bluetooth
 ser = serial.Serial(
 	    port='/dev/rfcomm0', #'/dev/ttyUSB0',#'/dev/ttyACM0',
 	    baudrate=9600,
@@ -22,20 +21,17 @@ except Exception:
 
 
 while 1:
-    # Insertar PWM y dirección de cada motor
     pwm_r_n = int(input('Inserte PWM_r_n: '))
     dir_r_n = int(input('Inserte dir_r_n: '))
     pwm_v_b = int(input('Inserte PWM_v_b: '))
     dir_v_b = int(input('Inserte dir_v_b: '))
     
-    # Crear trama
     if dir_r_n:
         pwm_r_n += 0x80
 
     if dir_v_b:
         pwm_v_b += 0x80
 
-    # Enviar trama
     if ser.isOpen():
         ser.write(b'\xFF')
         print(b'\xFF')
