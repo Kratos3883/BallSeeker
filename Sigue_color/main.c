@@ -58,9 +58,6 @@
 
 unsigned char CodError;
 unsigned short Reg_len = 20;
-unsigned char Reg_code[20] = {'C','R',' ','1','8',' ','3','6',' ','1','7',' ','2',' ','1','9',' ','3','2','\r'}; //CR [ reg1 value1 [reg2 value2 ... reg16 value16] ]\r  
-unsigned short Track_len = 23;
-unsigned char Track_code[23] = "TC 35 75 30 60 100 127\r";//"TC 145 151 15 17 105 109\r"; //TC [Rmin Rmax Gmin Gmax Bmin Bmax]\r  :TC 130 255 0 0 30 30 
 unsigned int i = 0;
 unsigned char Mx= 0;
 unsigned char SRmin = 0, SRmax = 0, SGmin = 0, SGmax = 0, SBmin = 0, SBmax = 0;
@@ -73,10 +70,8 @@ void SetPWM_v_b(unsigned short porc, bool dir);
 void Reconfiguracion_Facial();
 void sharp_motores(unsigned short v);
 unsigned char estado= ESPERAR;
-unsigned int enviados=2;
 unsigned short sharp = 0;
 unsigned short sharp_av = 0;
-unsigned short sharp_temp = 0;
 unsigned short duty_r_n = 0;//motor rojo-negro
 unsigned short duty_v_b = 0;//motor verde-blanco
 bool dir_r_n = 0;//motor rojo-negro
@@ -85,12 +80,6 @@ short error_theta=0;
 unsigned short P_der=2; //Constante de control proporcional
 unsigned short P_izq=5; //Constante de control proporcional
 bool Rx_Mx=0;		//Se ha recibido centroide, pasa a UBICAR_PELOTA
-
-
-float x_prev=0, x_delta=0;
-
-
-     
 
 void main(void)
  {
@@ -138,13 +127,12 @@ void main(void)
   		  case UBICAR_PELOTA:
   			  error_theta=Mx-40;
   			  Rx_Mx=0;
-  			  
   			  if(error_theta<-17)
 				  //Buscar objeto que está a la derecha
 			  {
   				  
   				duty_r_n=PWMf_r_n;
-  				duty_v_b=PWMf_v_b + error_theta*P_der;
+  				duty_v_b=PWMf_v_b + error_theta*P_der;	
 				dir_r_n=0;
 				dir_v_b=0;
 				SetPWM_r_n(duty_r_n,dir_r_n);
@@ -197,13 +185,6 @@ void SetPWM_r_n(unsigned short porc, bool dir)
 		Bit3_PutVal(dir);
 	}	
 }
-  /*{	
-  	//porc=porc & 0x3f; //0x3f=0011 1111
-	PWM1_SetDutyUS(porc);
-  	//PWM1_SetRatio16(porc);
-  	Bit1_PutVal(dir);
-  	Bit3_PutVal(dir);
-  }*/
 void SetPWM_v_b(unsigned short porc, bool dir)
 {
   	
@@ -220,34 +201,25 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		Bit4_PutVal(dir);
 	}
 }
-  /*{
-  	//porc= porc & 0x3f; //0x3f=0011 1111
-	PWM2_SetDutyUS(porc);
-	//PWM2_SetRatio16(porc);
-  	Bit2_PutVal(dir);
-  	Bit4_PutVal(dir);
-  }*/
-  //La curva que describe mejor el comportamiento del Sharp en términos de distancia vs V, es un polinomio de 6to grado
-  //En esta función se determina a que distancia corresponde el voltaje leído (v)
+
   void sharp_motores(unsigned short v)
+  // En esta función se toman los datos crudos que vienen del ADC los valores significan los siguiente:
+  // 2000-> 10cm 
+  // 1300-> 15cm
+  // 300-> distancia mayores a 60cm
+
   {
-  	if(v<=2000)//Pico maximo de la curva
+  	if(v<=2000)
   	{ 
-  		//multiplicación por coeficientes del polinomio
-		
-		//Se detiene si no hay obstáculo
-		if(v>=300 && v<=1300)
+		if(v>=300 && v<=1300)	//Avanza si hay objeto detectado
 		{
 			
 			dir_r_n = 0;	//adelante
 			dir_v_b = 0; 	//adelante
-			duty_r_n= PWMf_r_n;//+(Vref-v)*Kp_r_n;
-			duty_v_b= PWMf_v_b;//+(Vref-v)*Kp_v_b;
-			//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-			//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-			
+			duty_r_n= PWMf_r_n;
+			duty_v_b= PWMf_v_b;			
 		}
-		else
+		else	//Mantente detenido si no hay objeto cercano
 		{
 			duty_r_n = 0;
 			duty_v_b = 0;
@@ -261,9 +233,7 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 		dir_v_b = 1; 	//atras
 		duty_r_n= PWMb_r_n;
 		duty_v_b= PWMb_v_b;
-		//duty_r_n=65535*0.35; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez
-		//duty_v_b=65535*0.3; //65535(0xFFFF)*0.8=52427.2 (80% duty cycle) conforme se acerca al obstaculo disminuye rapidez		
-  	}
+ 	}
   }
   
   void Reconfiguracion_Facial()
@@ -278,7 +248,6 @@ void SetPWM_v_b(unsigned short porc, bool dir)
 	    if (estado_cam== 1){    //
 	      for(i = 0; i < Reg_len; i++){
 	        CodError = AS1_SendChar(Reg_code[i]);	//Configuración de registros
-	        //Cpu_Delay100US(1);
 	      }
 	      margarita = 1;
 	      estado_cam = 0;

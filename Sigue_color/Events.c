@@ -39,12 +39,9 @@ extern bool Rx_Mx;		//Se ha recibido centroide, pasa a UBICAR_PELOTA
 
 unsigned char j = 0;
 unsigned char charEdo = 0;
-
 extern unsigned char rChar;
 extern unsigned char SRmin, SRmax, SGmin, SGmax, SBmin, SBmax;
 unsigned char SRm, SGm, SBm, SRv, SGv, SBv;
-//extern unsigned char S[6];
-//unsigned char S[6] = {0,0,0,0,0,0};
 unsigned char S;
 
 /* User includes (#include below this line is not maintained by Processor Expert) */
@@ -93,10 +90,6 @@ void  AS1_OnRxChar(void)
 	//estado_cam = 1; 
 	AS1_RecvChar(&rChar);
 	AS2_SendChar(rChar);
-
-		
-	
-	
 	switch(charEdo)
 	{
 		case TRACK:
@@ -117,8 +110,6 @@ void  AS1_OnRxChar(void)
 				//AS2_SendChar(rChar);
 				bypass2 = 1;	//Inmediatamente despues de 'M' viene un espacio, activo bypass2
 			}
-
-
 			break;
 		
 		case IDENTIFICA:
